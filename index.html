@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF--8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monster Battler RPG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/"
+  }
+}
+</script>
+<style>
+    @keyframes shake {
+      0%, 100% { transform: translateX(0) scaleX(var(--tw-scale-x, 1)); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px) scaleX(var(--tw-scale-x, 1)); }
+      20%, 40%, 60%, 80% { transform: translateX(5px) scaleX(var(--tw-scale-x, 1)); }
+    }
+    .shake {
+      animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    @keyframes take-damage {
+        0%, 100% { transform: translateX(0); opacity: 1; }
+        20% { transform: translateX(-8px); }
+        40% { transform: translateX(8px); }
+        60% { transform: translateX(-8px); }
+        80% { transform: translateX(8px); }
+        10%, 30%, 50%, 70%, 90% { opacity: 0.4; }
+    }
+    .take-damage {
+        animation: take-damage 0.5s ease-in-out both;
+    }
+
+    @keyframes pulse-once {
+        0% { opacity: 0.5; }
+        50% { opacity: 1; }
+        100% { opacity: 1; }
+    }
+    .animate-pulse-once {
+        animation: pulse-once 0.8s forwards;
+    }
+    
+    /* Physical Lunge Animations */
+    @keyframes lunge-player {
+        50% { transform: translate(30px, -15px) scale(1.05); }
+    }
+    .lunge-player {
+        animation: lunge-player 0.4s ease-in-out;
+    }
+    @keyframes lunge-opponent {
+        50% { transform: translate(-25px, 15px) scale(1.05); }
+    }
+    .lunge-opponent {
+        animation: lunge-opponent 0.4s ease-in-out;
+    }
+
+    /* Special Attack Animation */
+    @keyframes cast-special {
+        0% { transform: scale(1); filter: brightness(1); }
+        50% { transform: scale(1.1); filter: brightness(1.5); }
+        100% { transform: scale(1); filter: brightness(1); }
+    }
+    .cast-special {
+        animation: cast-special 0.5s ease-in-out;
+    }
+
+    /* Idle Animation */
+    @keyframes float-idle {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-8px) scale(1.02); }
+    }
+    .animate-float-idle {
+        animation: float-idle 2s ease-in-out infinite;
+    }
+
+    /* Projectile Animations */
+    .projectile {
+        position: absolute;
+        z-index: 30;
+        pointer-events: none;
+        width: 40px;
+        height: 40px;
+    }
+    @keyframes travel-player-to-opponent {
+        from { left: 45%; bottom: 20%; transform: scale(0.5); opacity: 1; }
+        to { left: 55%; bottom: 60%; transform: scale(1); opacity: 0; }
+    }
+
+    @keyframes travel-opponent-to-player {
+        from { left: 55%; bottom: 60%; transform: scale(0.5); opacity: 1; }
+        to { left: 45%; bottom: 20%; transform: scale(1); opacity: 0; }
+    }
+    
+    /* Projectile Flair Keyframes */
+    @keyframes fire-pulse {
+        50% { transform: scale(1.2); box-shadow: 0 0 25px 10px #f44336; }
+    }
+    @keyframes water-wobble {
+        0%, 100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+        50% { border-radius: 30% 70% 40% 60% / 50% 60% 40% 60%; }
+    }
+    @keyframes electric-crackle {
+        0% { transform: scale(1) skew(0, 0); box-shadow: 0 0 20px 10px yellow; }
+        50% { transform: scale(0.9) skew(-10deg, 10deg); box-shadow: 0 0 30px 15px yellow; }
+    }
+    @keyframes poison-bubble {
+        0%, 100% { transform: scale(1); }
+        33% { transform: scale(1.1); }
+        66% { transform: scale(0.9); }
+    }
+    @keyframes grass-swirl {
+        50% { transform: rotate(180deg) scale(1.1); box-shadow: 0 0 20px 8px #4caf50; }
+    }
+    @keyframes flying-gust {
+        50% { box-shadow: 0 0 25px 15px rgba(173, 216, 230, 0.7); transform: scale(1.1); }
+    }
+
+    /* Projectile Type Styles & Combined Animations */
+    .projectile.fire {
+        background: radial-gradient(circle, white 20%, #ffc107 50%, #f44336 100%);
+        border-radius: 50%;
+        box-shadow: 0 0 15px 5px #f44336;
+    }
+    .projectile.fire.animate-player-projectile {
+        animation: travel-player-to-opponent 0.6s ease-in forwards, fire-pulse 0.3s infinite alternate;
+    }
+    .projectile.fire.animate-opponent-projectile {
+        animation: travel-opponent-to-player 0.6s ease-in forwards, fire-pulse 0.3s infinite alternate;
+    }
+
+    .projectile.water {
+        background: radial-gradient(circle, #e3f2fd 20%, #2196f3 100%);
+        opacity: 0.8;
+        transform: rotate(45deg);
+        width: 25px;
+        height: 50px;
+    }
+    .projectile.water.animate-player-projectile {
+        animation: travel-player-to-opponent 0.6s ease-in forwards, water-wobble 0.5s infinite ease-in-out;
+    }
+    .projectile.water.animate-opponent-projectile {
+        animation: travel-opponent-to-player 0.6s ease-in forwards, water-wobble 0.5s infinite ease-in-out;
+    }
+
+     .projectile.grass {
+        background: radial-gradient(circle, #c8e6c9 20%, #4caf50 100%);
+        width: 20px;
+        height: 45px;
+        border-radius: 50% 0;
+        transform: rotate(-45deg);
+    }
+     .projectile.grass.animate-player-projectile {
+        animation: travel-player-to-opponent 0.6s ease-in forwards, grass-swirl 0.6s ease-in-out infinite alternate;
+    }
+    .projectile.grass.animate-opponent-projectile {
+        animation: travel-opponent-to-player 0.6s ease-in-out infinite alternate, grass-swirl 0.6s;
+    }
+    
+    .projectile.poison {
+        background: radial-gradient(circle, #e1bee7 20%, #9c27b0 100%);
+        border-radius: 50%;
+        filter: blur(4px);
+    }
+    .projectile.poison.animate-player-projectile {
+        animation: travel-player-to-opponent 0.6s ease-in forwards, poison-bubble 0.4s infinite;
+    }
+    .projectile.poison.animate-opponent-projectile {
+        animation: travel-opponent-to-player 0.6s ease-in forwards, poison-bubble 0.4s infinite;
+    }
+
+    .projectile.electric {
+        background: yellow;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        box-shadow: 0 0 20px 10px yellow;
+    }
+    .projectile.electric.animate-player-projectile {
+        animation: travel-player-to-opponent 0.6s ease-in forwards, electric-crackle 0.1s infinite;
+    }
+    .projectile.electric.animate-opponent-projectile {
+        animation: travel-opponent-to-player 0.6s ease-in forwards, electric-crackle 0.1s infinite;
+    }
+
+    .projectile.flying, .projectile.normal {
+        background: radial-gradient(circle, white, rgba(255,255,255,0.5));
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+    .projectile.flying.animate-player-projectile {
+        animation: travel-player-to-opponent 0.6s ease-in forwards, flying-gust 0.4s infinite alternate;
+    }
+    .projectile.flying.animate-opponent-projectile {
+        animation: travel-opponent-to-player 0.6s ease-in forwards, flying-gust 0.4s infinite alternate;
+    }
+
+    /* Travel animation for types without flair */
+    .projectile.normal.animate-player-projectile {
+        animation: travel-player-to-opponent 0.6s ease-in forwards;
+    }
+    .projectile.normal.animate-opponent-projectile {
+        animation: travel-opponent-to-player 0.6s ease-in forwards;
+    }
+
+
+    /* Battle Arena Styles */
+    .battle-arena {
+        background: radial-gradient(circle, rgba(75,85,99,1) 0%, rgba(17,24,39,1) 70%);
+        overflow: hidden;
+        position: relative;
+        border-radius: 0.5rem;
+    }
+    .battle-platform {
+        width: 200px;
+        height: 70px;
+        background: radial-gradient(ellipse at 50% 50%, #55a64a 0%, #346c34 60%, transparent 70%);
+        border-radius: 50%;
+        position: absolute;
+    }
+    .platform-player {
+        bottom: 5%;
+        left: 45%;
+        transform: translateX(-50%) perspective(150px) rotateX(25deg);
+    }
+    .platform-opponent {
+        top: 35%;
+        left: 55%;
+        transform: translateX(-50%) perspective(150px) rotateX(25deg);
+        width: 160px;
+        height: 60px;
+    }
+</style>
+</head>
+<body class="bg-gray-900 text-white">
+    <div id="root"></div>
+</body>
+</html>

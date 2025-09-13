@@ -1,0 +1,5 @@
+{
+  "name": "Monster Battler RPG",
+  "description": "An offline, turn-based RPG where you can choose a starting monster, battle wild creatures, catch them, and evolve your team to become the ultimate trainer.",
+  "requestFramePermissions": []
+}
